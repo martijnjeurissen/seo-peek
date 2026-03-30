@@ -1,6 +1,9 @@
 # SEO Peek
 A browser extension for Chrome
 
+> This is a community fork of the original SEO Peek by [Sander Heilbron](https://github.com/sanderheilbron/seo-peek), 
+> who decided to stop development. Now maintained by [Martijn Jeurissen](https://github.com/martijnjeurissen).
+
 Just one click to get a quick peek into on-page SEO factors of the web page you visit in the browser.
 
 ## Checking the DOM
@@ -19,6 +22,6 @@ If you are unsure about a proposal, you can just open an issue to discuss it bef
 ## Changelog
 See [changelog][3] for details.
 
-[1]: https://github.com/sanderheilbron/seo-peek/issues
-[2]: https://github.com/sanderheilbron/seo-peek/pulls
-[3]: https://www.sanderheilbron.nl/seo-peek/upgrade
+[1]: https://github.com/martijnjeurissen/seo-peek/issues
+[2]: https://github.com/martijnjeurissen/seo-peek/pulls
+[3]: https://github.com/sanderheilbron/seo-peek/blob/master/CHANGELOG.md
