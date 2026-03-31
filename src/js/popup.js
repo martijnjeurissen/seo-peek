@@ -1,5 +1,13 @@
-chrome.tabs.executeScript(null, {
-    file: "js/script.js"
+// SEO Peek
+// Original author: Sander Heilbron (https://github.com/sanderheilbron/seo-peek)
+// Maintained by: Martijn Jeurissen (https://github.com/martijnjeurissen/seo-peek)
+
+// In Manifest V3, chrome.tabs.executeScript is replaced by chrome.scripting.executeScript
+chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+    chrome.scripting.executeScript({
+        target: { tabId: tabs[0].id },
+        files: ["js/script.js"]
+    });
 });
 
 var pageTitle = [],
@@ -27,25 +35,24 @@ var notAvailable = 'Not available',
 
 // Spinner settings
 var opts = {
-    lines: 13, // The number of lines to draw
-    length: 6, // The length of each line
-    width: 3, // The line thickness
-    radius: 8, // The radius of the inner circle
-    corners: 1, // Corner roundness (0..1)
-    rotate: 0, // The rotation offset
-    direction: 1, // 1: clockwise, -1: counterclockwise
-    color: '#000', // #rgb or #rrggbb
-    speed: 1, // Rounds per second
-    trail: 60, // Afterglow percentage
-    shadow: false, // Whether to render a shadow
-    hwaccel: false, // Whether to use hardware acceleration
-    className: 'spinner', // The CSS class to assign to the spinner
+    lines: 13,
+    length: 6,
+    width: 3,
+    radius: 8,
+    corners: 1,
+    rotate: 0,
+    direction: 1,
+    color: '#000',
+    speed: 1,
+    trail: 60,
+    shadow: false,
+    hwaccel: false,
+    className: 'spinner',
     zIndex: 2e9
 };
 
 /**
  * Listen for the content script to send a message to the background
- * On the receiving end, you need to set up an runtime.onMessage event listener to handle the message.
  */
 chrome.runtime.onMessage.addListener(
     function(request, sender, sendResponse) {
@@ -56,7 +63,6 @@ chrome.runtime.onMessage.addListener(
         }, function(tabs) {
             sendResponse({})
 
-            // and use that tab to fill in url and all page information
             var tab = tabs[0],
                 tabURL = tab.url;
 
@@ -163,7 +169,7 @@ chrome.runtime.onMessage.addListener(
             if (metaRobots == notAvailable || metaRobots == contentMissing) {
                 robotsElem.innerHTML = '<span class="missing-value">' + metaRobots + '</span>';
             } else {
-                robotsElem.innerText = metaRobots
+                robotsElem.innerText = metaRobots;
             }
             metaRobotsElem.appendChild(robotsElem);
 
@@ -175,123 +181,115 @@ chrome.runtime.onMessage.addListener(
             }
 
             // Canonical Link Tag
-            var canonicalLinkElem = document.getElementById("canonical-link-tag"),
-                canonicalLinkTag = request.canonicalLinkTag;
-            canonicalElem = document.createElement("p");
+            var canonicalLinkTagElem = document.getElementById("canonical-link-tag"),
+                canonicalElem = document.createElement("p");
+            canonicalLinkTag = request.canonicalLinkTag;
 
-            if (typeof canonicalLinkTag === "undefined") {
-                canonicalElem.innerHTML = canonicalLinkTag;
-            } else if (canonicalLinkTag === notAvailable || canonicalLinkTag === contentMissing) {
+            if (canonicalLinkTag == notAvailable || canonicalLinkTag == contentMissing) {
                 canonicalElem.innerHTML = '<span class="missing-value">' + canonicalLinkTag + '</span>';
             } else if (!hasProtocol(canonicalLinkTag)) {
                 canonicalElem.innerHTML = canonicalLinkTag;
             } else {
-                canonicalElem.innerHTML = '<span class="hreflang" id="canonical-link-tag-info-status"></span><br><a href="' + canonicalLinkTag + '" target="_blank">' + canonicalLinkTag + '</a><span class="hreflang" id="canonical-link-tag-info-response-url"></span><br><span id="canonical-link-tag-info-response-url-value"></span>';
-
+                canonicalElem.innerHTML = '<a href="' + canonicalLinkTag + '" target="_blank">' + canonicalLinkTag + '</a>';
                 if (canonicalLinkTag === tabURL) {
                     var spanCanonicalLinkTagInfo = document.getElementById("canonical-link-tag-info");
                     spanCanonicalLinkTagInfo.innerHTML = 'Self-referential';
                 }
             }
-            canonicalLinkElem.appendChild(canonicalElem);
+            canonicalLinkTagElem.appendChild(canonicalElem);
 
-            // Canonical Link Tag Occurrences
+            // Canonical link tag occurrences
             var canonicalLinkTagOccurrences = request.canonicalLinkTagOccurrences;
             if (canonicalLinkTagOccurrences > 1) {
                 var spanCanonicalLinkTagOccurrences = document.getElementById("canonical-link-tag-occurrences");
                 spanCanonicalLinkTagOccurrences.innerText = canonicalLinkTagOccurrences + ' elements';
             }
 
-            // Next Link Tag
-            var nextLinkElem = document.getElementById("next-link-tag"),
-                nextLinkTag = request.nextLinkTag;
-            nextElem = document.createElement("p");
+            // Prev Link Tag
+            var prevLinkTagElem = document.getElementById("prev-link-tag"),
+                prevElem = document.createElement("p");
+            prevLinkTag = request.prevLinkTag;
 
-            if (typeof nextLinkTag === "undefined") {
-                nextElem.innerHTML = nextLinkTag;
-            } else if (nextLinkTag === notAvailable || nextLinkTag === contentMissing) {
-                nextElem.innerHTML = '<span class="missing-value">' + nextLinkTag + '</span>';
-            } else if (!hasProtocol(nextLinkTag)) {
-                nextElem.innerHTML = nextLinkTag;
-            } else {
-                nextElem.innerHTML = '<a href="' + nextLinkTag + '" target="_blank">' + nextLinkTag + '</a>';
-
-                if (nextLinkTag === tabURL) {
-                    var spanNextLinkTagInfo = document.getElementById("next-link-tag-info");
-                    spanNextLinkTagInfo.innerHTML = 'Self-referential';
-                }
-            }
-            nextLinkElem.appendChild(nextElem);
-
-            // Previous Link Tag
-            var prevLinkElem = document.getElementById("prev-link-tag"),
-                prevLinkTag = request.prevLinkTag;
-            prevElem = document.createElement("p");
-
-            if (typeof prevLinkTag === "undefined") {
-                prevElem.innerHTML = prevLinkTag;
-            } else if (prevLinkTag === notAvailable || prevLinkTag === contentMissing) {
+            if (prevLinkTag == notAvailable || prevLinkTag == contentMissing) {
                 prevElem.innerHTML = '<span class="missing-value">' + prevLinkTag + '</span>';
             } else if (!hasProtocol(prevLinkTag)) {
                 prevElem.innerHTML = prevLinkTag;
             } else {
                 prevElem.innerHTML = '<a href="' + prevLinkTag + '" target="_blank">' + prevLinkTag + '</a>';
-
                 if (prevLinkTag === tabURL) {
                     var spanPrevLinkTagInfo = document.getElementById("prev-link-tag-info");
                     spanPrevLinkTagInfo.innerHTML = 'Self-referential';
                 }
             }
-            prevLinkElem.appendChild(prevElem);
+            prevLinkTagElem.appendChild(prevElem);
+
+            // Next Link Tag
+            var nextLinkTagElem = document.getElementById("next-link-tag"),
+                nextElem = document.createElement("p");
+            nextLinkTag = request.nextLinkTag;
+
+            if (nextLinkTag == notAvailable || nextLinkTag == contentMissing) {
+                nextElem.innerHTML = '<span class="missing-value">' + nextLinkTag + '</span>';
+            } else if (!hasProtocol(nextLinkTag)) {
+                nextElem.innerHTML = nextLinkTag;
+            } else {
+                nextElem.innerHTML = '<a href="' + nextLinkTag + '" target="_blank">' + nextLinkTag + '</a>';
+                if (nextLinkTag === tabURL) {
+                    var spanNextLinkTagInfo = document.getElementById("next-link-tag-info");
+                    spanNextLinkTagInfo.innerHTML = 'Self-referential';
+                }
+            }
+            nextLinkTagElem.appendChild(nextElem);
+
+            // Rel-alternate-media Link Tag
+            var relAlternateMediaLinkTagElem = document.getElementById("alternate-media-link-tag"),
+                relAlternateMediaElem = document.createElement("p");
+            relAlternateMediaLinkTag = request.relAlternateMediaLinkTag;
+
+            if (relAlternateMediaLinkTag == notAvailable || relAlternateMediaLinkTag == contentMissing) {
+                relAlternateMediaElem.innerHTML = '<span class="missing-value">' + relAlternateMediaLinkTag + '</span>';
+            } else if (!hasProtocol(relAlternateMediaLinkTag)) {
+                relAlternateMediaElem.innerHTML = relAlternateMediaLinkTag;
+            } else {
+                relAlternateMediaElem.innerHTML = '<a href="' + relAlternateMediaLinkTag + '" target="_blank">' + relAlternateMediaLinkTag + '</a>';
+                if (relAlternateMediaLinkTag === tabURL) {
+                    var spanMediaLinkTagInfo = document.getElementById("media-link-tag-info");
+                    spanMediaLinkTagInfo.innerHTML = 'Self-referential';
+                }
+            }
+            relAlternateMediaLinkTagElem.appendChild(relAlternateMediaElem);
 
             // AMP HTML Link Tag
-            var ampHTMLLinkElem = document.getElementById("amp-html-link-tag"),
-                ampHTMLLinkTag = request.ampHTMLLinkTag;
-            ampHTMLElem = document.createElement("p");
+            var ampHTMLLinkTagElem = document.getElementById("amp-html-link-tag"),
+                ampHTMLElem = document.createElement("p");
+            ampHTMLLinkTag = request.ampHTMLLinkTag;
 
-            if (ampHTMLLinkTag === notAvailable || ampHTMLLinkTag === contentMissing) {
+            if (ampHTMLLinkTag == notAvailable || ampHTMLLinkTag == contentMissing) {
                 ampHTMLElem.innerHTML = '<span class="missing-value">' + ampHTMLLinkTag + '</span>';
             } else if (!hasProtocol(ampHTMLLinkTag)) {
                 ampHTMLElem.innerHTML = ampHTMLLinkTag;
             } else {
                 ampHTMLElem.innerHTML = '<a href="' + ampHTMLLinkTag + '" target="_blank">' + ampHTMLLinkTag + '</a>';
             }
-            ampHTMLLinkElem.appendChild(ampHTMLElem);
+            ampHTMLLinkTagElem.appendChild(ampHTMLElem);
 
-            // Rel-alternate-media annotation
-            var alternateMediaLinkElem = document.getElementById("alternate-media-link-tag"),
-                relAlternateMediaLinkTag = request.relAlternateMediaLinkTag;
-            alternateMediaElem = document.createElement("p");
-            if (relAlternateMediaLinkTag === notAvailable || relAlternateMediaLinkTag === contentMissing) {
-                alternateMediaElem.innerHTML = '<span class="missing-value">' + relAlternateMediaLinkTag + '</span>';
-            } else if (!hasProtocol(relAlternateMediaLinkTag)) {
-                alternateMediaElem.innerHTML = relAlternateMediaLinkTag;
+            // Rel-alternate-hreflang Link Tag
+            var relAlternateHrefLangLinkTagElem = document.getElementById("alternate-hreflang-link-tag"),
+                relAlternateHrefLangElem = document.createElement("p");
+            relAlternateHrefLangLinkTag = request.relAlternateHrefLangLinkTag;
+
+            if (relAlternateHrefLangLinkTag == notAvailable || relAlternateHrefLangLinkTag == contentMissing) {
+                relAlternateHrefLangElem.innerHTML = '<span class="missing-value">' + relAlternateHrefLangLinkTag + '</span>';
             } else {
-                alternateMediaElem.innerHTML = '<a href="' + relAlternateMediaLinkTag + '" target="_blank">' + relAlternateMediaLinkTag + '</a>';
+                relAlternateHrefLangElem.innerHTML = relAlternateHrefLangLinkTag;
+                var spanAlternateHrefLangLinkTagInfo = document.getElementById("alternate-hreflang-link-tag-info");
+                spanAlternateHrefLangLinkTagInfo.innerHTML = 'Self-referential';
             }
-            alternateMediaLinkElem.appendChild(alternateMediaElem);
+            relAlternateHrefLangLinkTagElem.appendChild(relAlternateHrefLangElem);
 
-            // Rel-alternate-hreflang annotation
-            var alternateHreflangLinkElem = document.getElementById("alternate-hreflang-link-tag"),
-                relAlternateHrefLangLinkTag = request.relAlternateHrefLangLinkTag,
-                alternateHreflangElem = document.createElement("p");
-            if (relAlternateHrefLangLinkTag === notAvailable || relAlternateHrefLangLinkTag === contentMissing) {
-                alternateHreflangElem.innerHTML = '<span class="missing-value">' + relAlternateHrefLangLinkTag + '</span>';
-            } else {
-                alternateHreflangElem.innerHTML = relAlternateHrefLangLinkTag;
-            }
-            alternateHreflangLinkElem.appendChild(alternateHreflangElem);
-
-            var spanRelAlternateHrefLangLinkTagInfo = document.getElementById("alternate-hreflang-link-tag-info");
-            if (relAlternateHrefLangLinkTag !== 'Not available.') {
-                if (relAlternateHrefLangLinkTag.search(tabURL) !== -1) {
-                    spanRelAlternateHrefLangLinkTagInfo.innerHTML = 'Self-referential';
-                }
-            }
-
-            //Loads options from chrome.storage.sync.
+            // Display settings
             chrome.storage.sync.get(["metaKeywordsSetting", "paginationDirectivesSetting", "mobileDirectivesSetting", "internationalDirectivesSetting"], function(settings) {
-                if (!chrome.runtime.error) {
+                if (settings) {
                     var metaKeywordsSetting = settings.metaKeywordsSetting;
                     var paginationDirectivesSetting = settings.paginationDirectivesSetting;
                     var mobileDirectivesSetting = settings.mobileDirectivesSetting;
@@ -339,7 +337,6 @@ chrome.runtime.onMessage.addListener(
                             varyHeader = xhr.getResponseHeader('Vary') || notAvailable,
                             xRobotsTag = xhr.getResponseHeader('X-Robots-Tag') || notAvailable;
 
-                        // HTTP/2 does not provide a statusText, but returns a status
                         var httpStatus = statusCode + " " + statusText;
                         if (!statusText) {
                             var spanHTTPVersionInfo = document.getElementById("http-version-info");
@@ -363,7 +360,7 @@ chrome.runtime.onMessage.addListener(
                         }
                         xRobotsTagHTTPHeader.appendChild(xRobotsTagHeader);
 
-                        // Canonical Link Header, check for rel="canonical"
+                        // Canonical Link Header
                         if (/.*<(.*)>;\srel="canonical".*/.test(httpLinkHeader)) {
                             var httpCanonicalLinkHeader = /.*<(.*)>;\srel="canonical".*/;
                             canonicalLinkHeader = httpLinkHeader.replace(httpCanonicalLinkHeader, '$1');
@@ -371,7 +368,6 @@ chrome.runtime.onMessage.addListener(
                             canonicalLinkHeader = notAvailable;
                         }
 
-                        // Canonical Link Header
                         var canonicalLinkHTTPHeader = document.getElementById("canonical-link-header"),
                             canonicalHeader = document.createElement("p");
 
@@ -381,7 +377,6 @@ chrome.runtime.onMessage.addListener(
                             canonicalHeader.innerHTML = canonicalLinkHeader;
                         } else {
                             canonicalHeader.innerHTML = '<a href="' + canonicalLinkHeader + '" target="_blank">' + canonicalLinkHeader + '</a>';
-
                             if (canonicalLinkHeader === tabURL) {
                                 var spanCanonicalLinkHeaderInfo = document.getElementById("canonical-link-header-info");
                                 spanCanonicalLinkHeaderInfo.innerHTML = 'Self-referential';
@@ -401,17 +396,15 @@ chrome.runtime.onMessage.addListener(
 
                         // Show footer links
                         var seoPeekLink = document.getElementById("seo-peek");
-                        seoPeekLink.innerHTML = '<a href="https://www.sanderheilbron.nl/seo-peek/" target="_blank">SEO Peek</a>';
+                        seoPeekLink.innerHTML = '<a href="https://github.com/martijnjeurissen/seo-peek" target="_blank">SEO Peek</a>';
                         var shLink = document.getElementById("sh");
-                        shLink.innerHTML = '<a href="https://www.sanderheilbron.nl/" target="_blank">Sander Heilbron</a>';
+                        shLink.innerHTML = '<a href="https://www.sanderheilbron.nl/" target="_blank">Sander Heilbron</a> &mdash; Maintained by <a href="https://github.com/martijnjeurissen" target="_blank">Martijn Jeurissen</a>';
 
                         // Show content
                         infoElem.style.display = "block";
 
-                        // Remove spinner from DOM
+                        // Remove spinner
                         spinner.stop();
-
-                        // Hide spinner
                         spinnerElem.style.display = "none";
 
                         xhr2.onreadystatechange = function() {
@@ -430,7 +423,7 @@ chrome.runtime.onMessage.addListener(
                                     var spanCanonicalLinkTagInfoResponseUrl = document.getElementById("canonical-link-tag-info-response-url");
                                     spanCanonicalLinkTagInfoResponseUrl.innerHTML = "<br><hr>Response URL";
                                     var spanCanonicalLinkTagInfoResponseUrlValue = document.getElementById("canonical-link-tag-info-response-url-value");
-                                    spanCanonicalLinkTagInfoResponseUrlValue.innerHTML = '<a href="' + responseURL + '" target="_blank">' + responseURL + '</a>';;
+                                    spanCanonicalLinkTagInfoResponseUrlValue.innerHTML = '<a href="' + responseURL + '" target="_blank">' + responseURL + '</a>';
                                 }
                             }
                         };
@@ -454,8 +447,6 @@ chrome.runtime.onMessage.addListener(
             // Create spinner
             var spinner = new Spinner(opts).spin(spinnerElem);
 
-            // If you want to asynchronously use sendResponse, add return true; to the onMessage event handler.
             return true;
         });
-
     });
